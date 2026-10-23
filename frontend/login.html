@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기찾이 - 로그인</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Alibaba Sans TC';
+      src: local('Alibaba Sans TC'), local('AlibabaSansTC-Bold');
+      font-weight: 700;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    h1, h2, h3, h4, .font-heading, .font-bold, .font-extrabold, .font-black {
+      font-family: 'Alibaba Sans TC', 'Noto Sans KR', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 min-h-screen pb-20">
+
+  <!-- Header -->
+  <header class="bg-[#D8EEFF] px-8 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-8">
+      <a href="index.html" class="text-2xl font-black text-slate-900 tracking-tight">기찾이</a>
+      <nav class="flex space-x-6 text-sm font-medium text-slate-700">
+        <a href="index.html" class="hover:text-slate-900">홈</a>
+        <a href="ai-search.html" class="hover:text-slate-900">AI 기사 찾기</a>
+        <a href="search.html" class="hover:text-slate-900">검색</a>
+        <a href="word-learning.html" class="hover:text-slate-900">단어 학습</a>
+        <a href="saved-articles.html" class="hover:text-slate-900">저장한 기사</a>
+        <a href="mypage.html" class="hover:text-slate-900">마이페이지</a>
+      </nav>
+    </div>
+    <a href="login.html" class="bg-[#A0D7FF] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto mt-16 px-4">
+    <h2 class="text-3xl font-black text-slate-900 text-center mb-10">다시 만나서 반가워요</h2>
+
+    <!-- Tabs (회원가입 탭 누르면 signup.html로 이동) -->
+    <div class="flex border-b border-slate-200 mb-8 text-center text-sm font-bold">
+      <a href="login.html" class="w-1/2 py-3 text-slate-900 border-b-2 border-slate-900">로그인</a>
+      <a href="signup.html" class="w-1/2 py-3 text-slate-400 hover:text-slate-900 transition">회원가입</a>
+    </div>
+
+    <!-- Login Form -->
+    <form class="space-y-4" onsubmit="event.preventDefault(); location.href='index.html';">
+      <div>
+        <input type="text" placeholder="아이디를 입력하세요." class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-sky-400 placeholder:text-slate-400">
+      </div>
+      <div>
+        <input type="password" placeholder="비밀번호를 입력하세요." class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-sky-400 placeholder:text-slate-400">
+      </div>
+      <button type="submit" class="w-full bg-[#A0D7FF] text-white py-3 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</button>
+    </form>
+
+    <!-- Social Login -->
+    <div class="mt-8 text-center">
+      <p class="text-xs text-slate-400 font-semibold tracking-wider mb-6">- SOCIAL LOGIN -</p>
+      <div class="space-y-3">
+        <button onclick="location.href='index.html'" class="w-full border border-slate-200 py-3 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">Google 계정으로 로그인</button>
+        <button onclick="location.href='index.html'" class="w-full border border-slate-200 py-3 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">Kakao 계정으로 로그인</button>
+        <button onclick="location.href='index.html'" class="w-full border border-slate-200 py-3 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">Naver 계정으로 로그인</button>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>

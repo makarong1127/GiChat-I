@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기찾이 - 검색 결과</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Alibaba Sans TC';
+      src: local('Alibaba Sans TC'), local('AlibabaSansTC-Bold');
+      font-weight: 700;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    h1, h2, h3, h4, .font-heading, .font-bold, .font-extrabold, .font-black {
+      font-family: 'Alibaba Sans TC', 'Noto Sans KR', sans-serif;
+    }
+    .font-mono-badge { font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace; }
+
+    .article-card {
+      border-color: #E2E8F0;
+      transition: all 0.2s ease;
+    }
+    .article-card:hover {
+      border-color: #7DD3FC;
+    }
+    .article-card:hover .card-title {
+      color: #0284C7;
+    }
+
+    .article-card:has(button:hover) {
+      border-color: #E2E8F0 !important;
+    }
+    .article-card:has(button:hover) .card-title {
+      color: #0F172A !important;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen pb-20">
+
+  <!-- Header -->
+  <header class="bg-[#D8EEFF] px-8 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-8">
+      <a href="index.html" class="text-2xl font-black text-slate-900 tracking-tight">기찾이</a>
+      <nav class="flex space-x-6 text-sm font-medium text-slate-700">
+        <a href="index.html" class="hover:text-slate-900">홈</a>
+        <a href="ai-search.html" class="hover:text-slate-900">AI 기사 찾기</a>
+        <a href="search.html" class="font-bold text-slate-900 border-b-2 border-slate-900 pb-0.5">검색</a>
+        <a href="word-learning.html" class="hover:text-slate-900">단어 학습</a>
+        <a href="saved-articles.html" class="hover:text-slate-900">저장한 기사</a>
+        <a href="mypage.html" class="hover:text-slate-900">마이페이지</a>
+      </nav>
+    </div>
+    <a href="login.html" class="bg-[#A0D7FF] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</a>
+  </header>
+
+  <main class="max-w-6xl mx-auto mt-10 px-4 space-y-8">
+    <h2 class="text-3xl font-black text-slate-900">검색 결과</h2>
+
+    <div class="space-y-4">
+      <form id="search-form" class="flex gap-3">
+        <input id="search-input" type="text" placeholder="기사 검색 (예: 금리, 딥페이크)" class="flex-1 border border-slate-200 rounded-lg px-4 py-3 text-sm outline-none bg-white focus:border-sky-400">
+        <button type="submit" class="bg-[#A0D7FF] text-white px-8 py-3 rounded-lg text-sm font-semibold hover:bg-sky-400">검색</button>
+      </form>
+
+      <div class="grid grid-cols-4 gap-4 text-xs">
+        <div>
+          <label class="block text-slate-500 mb-1">분야</label>
+          <select class="w-full border border-slate-200 bg-white rounded-lg p-2.5 text-slate-400 outline-none" disabled title="기사 상세에서 AI가 분류합니다"><option>전체</option></select>
+        </div>
+        <div>
+          <label class="block text-slate-500 mb-1">출처</label>
+          <select id="filter-source" class="w-full border border-slate-200 bg-white rounded-lg p-2.5 text-slate-700 outline-none"><option value="">전체</option></select>
+        </div>
+        <div>
+          <label class="block text-slate-500 mb-1">난이도</label>
+          <select class="w-full border border-slate-200 bg-white rounded-lg p-2.5 text-slate-400 outline-none" disabled title="기사 상세에서 AI가 판정합니다"><option>전체</option></select>
+        </div>
+        <div>
+          <label class="block text-slate-500 mb-1">기간</label>
+          <select id="filter-days" class="w-full border border-slate-200 bg-white rounded-lg p-2.5 text-slate-700 outline-none">
+            <option value="1">오늘</option>
+            <option value="7" selected>최근 7일</option>
+            <option value="30">최근 30일</option>
+            <option value="0">전체</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <p id="result-summary" class="text-xs text-slate-500 font-medium">검색어를 입력해 주세요.</p>
+
+    <!-- 검색 결과 Cards -->
+    <div id="results" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+  </main>
+
+  <script src="js/saved.js"></script>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const form = $('#search-form');
+    const input = $('#search-input');
+    const daysSel = $('#filter-days');
+    const sourceSel = $('#filter-source');
+    const results = $('#results');
+    const summary = $('#result-summary');
+
+    let allItems = [];
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+    }
+
+    function cardHTML(item) {
+      const meta = [item.source, fmtDate(item.pub_date)].filter(Boolean).join(' · ');
+      return `
+        <div class="article-card border bg-white rounded-xl shadow-sm flex flex-col justify-between overflow-hidden">
+          <div onclick="location.href='article-detail.html?id=${esc(item.id)}'" class="p-5 pb-0 cursor-pointer flex-1">
+            <div class="flex items-center space-x-2 text-xs mb-3">
+              <span class="text-sky-600 font-semibold">${esc(item.source || '뉴스')}</span>
+              <span class="bg-sky-50 text-sky-500 border border-sky-100 px-2 py-0.5 rounded-md font-mono-badge font-medium">AI 요약 보기</span>
+            </div>
+            <h4 class="card-title font-bold text-base text-slate-900 mb-2 leading-snug transition-colors">${esc(item.title)}</h4>
+          </div>
+          <div class="flex justify-between items-center p-5 pt-3 border-t border-slate-50">
+            <span class="text-xs text-slate-400">${esc(meta)}</span>
+            <button data-save-id="${esc(item.id)}" class="border border-slate-200 text-slate-600 px-3 py-1 rounded-md text-xs hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition">저장</button>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      const src = sourceSel.value;
+      const items = src ? allItems.filter((i) => i.source === src) : allItems;
+      results.innerHTML = items.map(cardHTML).join('');
+      GichatiSaved.bind(results);
+      const q = input.value.trim();
+      summary.innerHTML = `"${esc(q)}" 검색 결과 <span class="font-bold text-slate-800">${items.length}건</span>` +
+        (src ? ` <span class="text-slate-400">(출처: ${esc(src)})</span>` : '');
+      if (items.length === 0) {
+        results.innerHTML = '<p class="text-sm text-slate-400 col-span-3">검색 결과가 없습니다.</p>';
+      }
+    }
+
+    function fillSources(items) {
+      const counts = {};
+      items.forEach((i) => { if (i.source) counts[i.source] = (counts[i.source] || 0) + 1; });
+      const sources = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+      sourceSel.innerHTML = '<option value="">전체</option>' +
+        sources.map((s) => `<option value="${esc(s)}">${esc(s)} (${counts[s]})</option>`).join('');
+    }
+
+    async function search(q, days) {
+      summary.textContent = `"${q}" 검색 중...`;
+      results.innerHTML = '';
+      try {
+        const [res] = await Promise.all([
+          fetch(`/api/news/search?q=${encodeURIComponent(q)}&days=${days}&count=30`),
+          GichatiSaved.load(),
+        ]);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        allItems = data.items;
+        fillSources(allItems);
+        render();
+      } catch (e) {
+        summary.textContent = '검색에 실패했습니다: ' + e.message;
+      }
+    }
+
+    function navigate(q, days) {
+      const params = new URLSearchParams({ q, days });
+      location.href = `search.html?${params.toString()}`;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (q) navigate(q, daysSel.value);
+    });
+    daysSel.addEventListener('change', () => {
+      const q = input.value.trim();
+      if (q) navigate(q, daysSel.value);
+    });
+    sourceSel.addEventListener('change', render);
+
+    // URL 의 ?q=&days= 로 시작
+    const params = new URLSearchParams(location.search);
+    const initialQ = (params.get('q') || '').trim();
+    const initialDays = params.get('days') ?? '7';
+    if ([...daysSel.options].some((o) => o.value === initialDays)) daysSel.value = initialDays;
+    if (initialQ) {
+      input.value = initialQ;
+      search(initialQ, daysSel.value);
+    } else {
+      input.focus();
+    }
+  </script>
+</body>
+</html>

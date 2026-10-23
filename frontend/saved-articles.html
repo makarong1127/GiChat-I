@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기찾이 - 저장한 기사</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Alibaba Sans TC';
+      src: local('Alibaba Sans TC'), local('AlibabaSansTC-Bold');
+      font-weight: 700;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    h1, h2, h3, h4, .font-heading, .font-bold, .font-extrabold, .font-black {
+      font-family: 'Alibaba Sans TC', 'Noto Sans KR', sans-serif;
+    }
+    .font-mono-badge { font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace; }
+
+    .article-card {
+      border-color: #E2E8F0;
+      transition: all 0.2s ease;
+    }
+    .article-card:hover {
+      border-color: #7DD3FC;
+    }
+    .article-card:hover .card-title {
+      color: #0284C7;
+    }
+
+    .article-card:has(button:hover) {
+      border-color: #E2E8F0 !important;
+    }
+    .article-card:has(button:hover) .card-title {
+      color: #0F172A !important;
+    }
+
+    .topic-chip {
+      background-color: #FFFFFF;
+      border-color: #E2E8F0;
+      color: #475569;
+      transition: all 0.2s ease;
+    }
+    .topic-chip:hover { border-color: #7DD3FC; }
+    .topic-chip.active {
+      background-color: #EBF5FF;
+      border-color: #D8EEFF;
+      color: #3B82F6;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen pb-20">
+
+  <!-- Header -->
+  <header class="bg-[#D8EEFF] px-8 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-8">
+      <a href="index.html" class="text-2xl font-black text-slate-900 tracking-tight">기찾이</a>
+      <nav class="flex space-x-6 text-sm font-medium text-slate-700">
+        <a href="index.html" class="hover:text-slate-900">홈</a>
+        <a href="ai-search.html" class="hover:text-slate-900">AI 기사 찾기</a>
+        <a href="search.html" class="hover:text-slate-900">검색</a>
+        <a href="word-learning.html" class="hover:text-slate-900">단어 학습</a>
+        <a href="saved-articles.html" class="font-bold text-slate-900 border-b-2 border-slate-900 pb-0.5">저장한 기사</a>
+        <a href="mypage.html" class="hover:text-slate-900">마이페이지</a>
+      </nav>
+    </div>
+    <a href="login.html" class="bg-[#A0D7FF] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto mt-10 px-4 space-y-12">
+
+    <h2 class="text-3xl font-black text-slate-900">저장한 기사</h2>
+
+    <!-- 저장 기사 Section -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-900">저장 기사</h3>
+        <span id="saved-count" class="text-xs text-slate-400 font-medium">불러오는 중...</span>
+      </div>
+
+      <div id="saved-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- 관심 주제 Section -->
+    <section id="topic-section" class="hidden">
+      <h3 class="text-lg font-bold text-slate-900 mb-2">관심 주제</h3>
+
+      <div id="topic-chips" class="flex flex-wrap gap-2 mb-2"></div>
+      <p class="text-xs text-slate-400 mb-6">저장한 기사에서 모은 주제예요. 누르면 해당 분야 기사를 볼 수 있어요.</p>
+
+      <div id="topic-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <script src="js/saved.js"></script>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    let items = [];
+    let activeTopic = null;
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+    }
+
+    function cardHTML(item) {
+      const meta = [item.source, fmtDate(item.pub_date)].filter(Boolean).join(' · ');
+      const badge = item.importance != null
+        ? `<span class="bg-sky-50 text-sky-500 border border-sky-100 px-2 py-0.5 rounded-md font-mono-badge font-medium">중요도 ${esc(item.importance)}/5</span>`
+        : `<span class="bg-slate-50 text-slate-400 border border-slate-100 px-2 py-0.5 rounded-md font-mono-badge font-medium">아직 분석 전</span>`;
+      const desc = item.summary_first
+        ? `<p class="text-xs text-slate-500 leading-relaxed">${esc(item.summary_first)}</p>`
+        : `<p class="text-xs text-slate-400 leading-relaxed">기사를 열면 AI 요약과 분야가 채워져요.</p>`;
+      return `
+        <div class="article-card border bg-white rounded-xl shadow-sm flex flex-col justify-between overflow-hidden" data-card-id="${esc(item.id)}">
+          <div onclick="location.href='article-detail.html?id=${esc(item.id)}'" class="p-5 pb-0 cursor-pointer flex-1">
+            <div class="flex items-center space-x-2 text-xs mb-3">
+              <span class="text-sky-600 font-semibold">${esc(item.category || item.source || '뉴스')}</span>
+              ${badge}
+            </div>
+            <h4 class="card-title font-bold text-base text-slate-900 mb-2 leading-snug transition-colors">${esc(item.title)}</h4>
+            ${desc}
+          </div>
+          <div class="flex justify-between items-center p-5 pt-3 border-t border-slate-50">
+            <span class="text-xs text-slate-400">${esc(meta)}</span>
+            <button data-save-id="${esc(item.id)}" data-save-label="다시 저장" data-unsave-label="저장 취소">저장 취소</button>
+          </div>
+        </div>`;
+    }
+
+    function renderSaved() {
+      const grid = $('#saved-grid');
+      $('#saved-count').textContent = `${items.length}건`;
+      if (items.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-3 border border-dashed border-slate-200 rounded-xl p-10 text-center text-sm text-slate-400">
+            아직 저장한 기사가 없어요. <a href="search.html" class="text-sky-600 font-semibold hover:underline">기사 검색</a>에서 저장 버튼을 눌러 보세요.
+          </div>`;
+      } else {
+        grid.innerHTML = items.map(cardHTML).join('');
+      }
+      GichatiSaved.bind(grid);
+    }
+
+    function renderTopics() {
+      const counts = {};
+      items.forEach((i) => { if (i.category) counts[i.category] = (counts[i.category] || 0) + 1; });
+      const topics = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+      const section = $('#topic-section');
+      if (topics.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+      section.classList.remove('hidden');
+      if (!activeTopic || !counts[activeTopic]) activeTopic = topics[0];
+
+      $('#topic-chips').innerHTML = topics.map((t) =>
+        `<button data-topic="${esc(t)}" class="topic-chip border px-3.5 py-1.5 rounded-full text-xs ${t === activeTopic ? 'active' : 'font-medium'}">${esc(t)} ${counts[t]}</button>`
+      ).join('');
+      $('#topic-chips').querySelectorAll('[data-topic]').forEach((btn) => {
+        btn.onclick = () => { activeTopic = btn.dataset.topic; renderTopics(); };
+      });
+
+      const grid = $('#topic-grid');
+      grid.innerHTML = items.filter((i) => i.category === activeTopic).map(cardHTML).join('');
+      GichatiSaved.bind(grid);
+    }
+
+    async function load() {
+      try {
+        const [res] = await Promise.all([fetch('/api/saved'), GichatiSaved.load()]);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        items = (await res.json()).items;
+      } catch (e) {
+        $('#saved-count').textContent = '불러오기 실패: ' + e.message;
+        return;
+      }
+      renderSaved();
+      renderTopics();
+    }
+
+    // 저장 취소/다시 저장 시 목록과 관심 주제를 서버 기준으로 다시 그린다
+    document.addEventListener('gichati:saved-changed', () => load());
+
+    load();
+  </script>
+</body>
+</html>

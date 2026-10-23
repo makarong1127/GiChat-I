@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기찾이 - 기사 상세</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Alibaba Sans TC';
+      src: local('Alibaba Sans TC'), local('AlibabaSansTC-Bold');
+      font-weight: 700;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    h1, h2, h3, h4, .font-heading, .font-bold, .font-extrabold, .font-black {
+      font-family: 'Alibaba Sans TC', 'Noto Sans KR', sans-serif;
+    }
+    .font-mono-badge { font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace; }
+
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    .loading { animation: pulse-soft 1.4s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen pb-20">
+
+  <!-- Header -->
+  <header class="bg-[#D8EEFF] px-8 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-8">
+      <a href="index.html" class="text-2xl font-black text-slate-900 tracking-tight">기찾이</a>
+      <nav class="flex space-x-6 text-sm font-medium text-slate-700">
+        <a href="index.html" class="hover:text-slate-900">홈</a>
+        <a href="ai-search.html" class="hover:text-slate-900">AI 기사 찾기</a>
+        <a href="search.html" class="hover:text-slate-900">검색</a>
+        <a href="word-learning.html" class="hover:text-slate-900">단어 학습</a>
+        <a href="saved-articles.html" class="hover:text-slate-900">저장한 기사</a>
+        <a href="mypage.html" class="hover:text-slate-900">마이페이지</a>
+      </nav>
+    </div>
+    <a href="login.html" class="bg-[#A0D7FF] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto mt-10 px-4 space-y-8">
+    <button onclick="history.back()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium">
+      ← 뒤로 가기
+    </button>
+
+    <article class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
+      <div class="space-y-3 border-b border-slate-100 pb-6">
+        <div class="flex items-center space-x-2 text-xs">
+          <span id="category" class="text-sky-600 font-semibold">분류 중</span>
+          <span id="badge" class="bg-sky-50 text-sky-500 border border-sky-100 px-2 py-0.5 rounded-md font-mono-badge font-medium">AI 분석 중</span>
+        </div>
+        <h2 id="title" class="text-2xl font-black text-slate-900 leading-snug loading">기사를 불러오는 중...</h2>
+        <div class="flex justify-between items-center text-xs text-slate-400">
+          <span id="meta"></span>
+          <div class="flex items-center gap-2">
+            <a id="original" href="#" target="_blank" rel="noopener" class="hidden border border-slate-200 text-slate-600 px-3.5 py-1.5 rounded-md hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition">원문 보기</a>
+            <button id="save-btn" data-save-label="저장하기" data-unsave-label="저장됨" class="hidden border border-slate-200 text-slate-600 px-3.5 py-1.5 rounded-md hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition">저장하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI 3줄 요약 -->
+      <section class="bg-[#EBF5FF] border border-sky-100 rounded-xl p-5 space-y-2">
+        <h3 class="text-xs font-bold text-sky-700 flex items-center gap-1">
+          ✨ AI 세 줄 요약
+        </h3>
+        <ul id="summary" class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed">
+          <li class="loading">AI가 기사를 읽고 요약하는 중이에요. 몇 초 정도 걸려요.</li>
+        </ul>
+        <div id="tags" class="flex flex-wrap gap-1.5 pt-2"></div>
+      </section>
+
+      <!-- 본문 내용 -->
+      <section id="body" class="text-sm text-slate-700 leading-relaxed space-y-4 pt-2"></section>
+    </article>
+  </main>
+
+  <script src="js/saved.js"></script>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+    }
+
+    const SENTIMENT_LABEL = { positive: '긍정', neutral: '중립', negative: '부정' };
+
+    function showError(msg) {
+      $('#title').classList.remove('loading');
+      $('#title').textContent = '기사를 불러오지 못했습니다';
+      $('#summary').innerHTML = `<li>${esc(msg)}</li>`;
+      $('#category').textContent = '오류';
+      $('#badge').textContent = '-';
+    }
+
+    function renderArticle(a) {
+      const title = $('#title');
+      title.classList.remove('loading');
+      title.textContent = a.title;
+      document.title = `기찾이 - ${a.title}`;
+
+      $('#meta').textContent = [a.source, fmtDate(a.pub_date)].filter(Boolean).join(' · ');
+
+      const link = a.original_link || a.link;
+      if (link) {
+        const orig = $('#original');
+        orig.href = link;
+        orig.classList.remove('hidden');
+      }
+
+      const saveBtn = $('#save-btn');
+      saveBtn.dataset.saveId = a.id;
+      saveBtn.classList.remove('hidden');
+      GichatiSaved.bind(saveBtn.parentElement);
+
+      const body = $('#body');
+      if (a.paragraphs && a.paragraphs.length) {
+        body.innerHTML = a.paragraphs.map((p) => `<p>${esc(p)}</p>`).join('');
+      } else {
+        body.innerHTML = '<p class="text-slate-400 text-xs">본문을 가져오지 못했어요. 위의 "원문 보기"에서 전체 기사를 읽을 수 있어요.</p>';
+      }
+
+      const an = a.analysis;
+      if (!an) {
+        $('#category').textContent = '분석 실패';
+        $('#badge').textContent = '-';
+        $('#summary').innerHTML = `<li>AI 분석에 실패했어요. ${esc(a.error || '')}</li>`;
+        return;
+      }
+
+      $('#category').textContent = an.category || an.topic || '뉴스';
+      $('#badge').textContent = `중요도 ${an.importance ?? '-'}/5`;
+
+      const lines = Array.isArray(an.summary) ? an.summary : [an.summary].filter(Boolean);
+      $('#summary').innerHTML = lines.map((s) => `<li>${esc(s)}</li>`).join('') || '<li>요약이 없습니다.</li>';
+
+      const tags = [];
+      (an.keywords || []).forEach((k) => tags.push(`#${k}`));
+      if (an.difficulty) tags.push(`난이도 ${an.difficulty}`);
+      if (an.sentiment) tags.push(SENTIMENT_LABEL[an.sentiment] || an.sentiment);
+      $('#tags').innerHTML = tags
+        .map((t) => `<span class="bg-white border border-sky-100 text-sky-700 px-2 py-0.5 rounded-full text-[11px]">${esc(t)}</span>`)
+        .join('');
+    }
+
+    async function load() {
+      const id = new URLSearchParams(location.search).get('id');
+      if (!id) {
+        showError('기사 ID가 없습니다. 검색 결과에서 기사를 선택해 주세요.');
+        return;
+      }
+      try {
+        const [res] = await Promise.all([
+          fetch(`/api/articles/${encodeURIComponent(id)}`),
+          GichatiSaved.load(),
+        ]);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        renderArticle(await res.json());
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

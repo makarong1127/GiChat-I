@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기찾이 - AI 기사 찾기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Alibaba Sans TC';
+      src: local('Alibaba Sans TC'), local('AlibabaSansTC-Bold');
+      font-weight: 700;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    h1, h2, h3, h4, .font-heading, .font-bold, .font-extrabold, .font-black {
+      font-family: 'Alibaba Sans TC', 'Noto Sans KR', sans-serif;
+    }
+    .font-mono-badge { font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace; }
+
+    .article-card {
+      border-color: #BAE6FD;
+      transition: all 0.2s ease;
+    }
+    .article-card:hover {
+      border-color: #38BDF8;
+    }
+    .article-card:hover .card-title {
+      color: #0284C7;
+    }
+
+    .article-card:has(button:hover) {
+      border-color: #BAE6FD !important;
+    }
+    .article-card:has(button:hover) .card-title {
+      color: #0F172A !important;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-[#D8EEFF] px-8 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-8">
+      <a href="index.html" class="text-2xl font-black text-slate-900 tracking-tight">기찾이</a>
+      <nav class="flex space-x-6 text-sm font-medium text-slate-700">
+        <a href="index.html" class="hover:text-slate-900">홈</a>
+        <a href="ai-search.html" class="font-bold text-slate-900 border-b-2 border-slate-900 pb-0.5">AI 기사 찾기</a>
+        <a href="search.html" class="hover:text-slate-900">검색</a>
+        <a href="word-learning.html" class="hover:text-slate-900">단어 학습</a>
+        <a href="saved-articles.html" class="hover:text-slate-900">저장한 기사</a>
+        <a href="mypage.html" class="hover:text-slate-900">마이페이지</a>
+      </nav>
+    </div>
+    <a href="login.html" class="bg-[#A0D7FF] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-400 transition">로그인</a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto w-full flex-1 mt-8 px-4 flex flex-col justify-between pb-6">
+    <div>
+      <h2 class="text-3xl font-black text-slate-900 mb-1">AI 기사 찾기</h2>
+      <p class="text-xs text-slate-400 mb-8">궁금한 것을 편하게 물어보세요. 관련 기사를 골라 드려요.</p>
+
+      <div class="space-y-6">
+        <!-- User Message -->
+        <div class="flex justify-end">
+          <div class="bg-white border border-slate-200 rounded-2xl px-5 py-3 text-sm text-slate-700 max-w-lg shadow-sm">
+            금리가 뭐야? 관련 기사 찾아줘
+          </div>
+        </div>
+
+        <!-- AI Response -->
+        <div class="flex justify-start">
+          <div class="bg-[#EBF5FF] border border-sky-100 rounded-2xl p-4 max-w-xl shadow-sm space-y-3">
+            <p class="text-xs text-slate-700 font-medium">"금리가 뭐야? 관련 기사 찾아줘" 관련 기사를 1건 찾았어요.</p>
+            
+            <div class="article-card bg-white rounded-xl p-4 border shadow-xs flex justify-between items-center overflow-hidden">
+              <div onclick="location.href='article-detail.html'" class="cursor-pointer flex-1 pr-4">
+                <h4 class="card-title font-bold text-sm text-slate-900 mb-1 transition-colors">기준금리 동결 이어져, 가계 대출 이자 부담은 여전</h4>
+                <p class="text-[11px] text-slate-400">뉴시스 · 2026.10.19 · <span class="font-mono-badge font-semibold text-sky-600">검증 93</span></p>
+              </div>
+              <button onclick="alert('저장되었습니다.');" class="border border-slate-200 text-slate-600 px-3 py-1 rounded-md text-xs hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 shrink-0 transition">저장</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Input Area -->
+    <div class="mt-8 space-y-3">
+      <div class="flex items-center space-x-2 text-xs overflow-x-auto pb-1">
+        <span class="text-slate-400 shrink-0">추천 질문</span>
+        <button class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 whitespace-nowrap">금리가 뭐야? 관련 기사 찾아줘</button>
+        <button class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 whitespace-nowrap">AI 때문에 개발자 취업은 어떻게 바뀌고 있어?</button>
+      </div>
+
+      <div class="flex gap-3">
+        <input type="text" placeholder="예) 금리가 뭐야? 관련 기사 알려 줘" class="flex-1 border border-slate-200 rounded-xl px-5 py-3.5 text-sm outline-none bg-white focus:border-sky-400">
+        <button class="bg-[#A0D7FF] text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-sky-400 shrink-0">보내기</button>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
